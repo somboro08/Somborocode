@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Somboro-code — solutions numériques, sites et applications",
+      "hasCanvas": false,
+      "bodyTextLen": 4154,
+      "bodyTextHash": "7eec577acba371ce4aeba2c5b95ba0f4188c0adc932010d453fe265fa24d973e",
+      "bodyTextPrefix": "Aller au contenu Somboro-code Accueil Services Approche Parler d",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Somboro-code — solutions numériques, sites et applications",
+      "hasCanvas": false,
+      "bodyTextLen": 4133,
+      "bodyTextHash": "cc767ee0ae667d02631a111366875f3a2a956e16595ce32ba3af5aed24e47a66",
+      "bodyTextPrefix": "Aller au contenu Somboro-code Mon projet Ouvrir le menu AGENCE D",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-preview.json"
+}
