@@ -5,8 +5,6 @@ const PUBLIC_PATHS = [
   "/",
   "/services",
   "/approche",
-  "/demarrer",
-  "/rendez-vous",
   "/confidentialite",
   "/mentions-legales",
   "/conditions",
