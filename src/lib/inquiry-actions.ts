@@ -6,6 +6,7 @@ import {
   projectInquirySchema,
 } from "@/lib/inquiry-schema";
 import { z } from "zod";
+import { requireTeamRole } from "@/lib/auth/team-rbac.server";
 
 export type InquiryListItem = {
   id: string;
@@ -40,7 +41,9 @@ export type InquiryDetail = InquiryListItem & {
 
 export const submitProjectInquiry = createServerFn({ method: "POST" })
   .validator(projectInquirySchema)
-  .handler(async ({ data }) => {
+    .handler(async ({ data, context }) => {
+    await requireTeamRole(context.userId, ["admin", "staff"]);
+    await requireTeamRole(context.userId, ["admin", "staff", "viewer"]);
     const guard = await import("@/lib/submit-guard.server");
     if (guard.isHoneypot(data.faxNumber)) {
       await guard.sleep(400);
@@ -67,7 +70,8 @@ export const submitProjectInquiry = createServerFn({ method: "POST" })
 
 export const submitAppointmentInquiry = createServerFn({ method: "POST" })
   .validator(appointmentInquirySchema)
-  .handler(async ({ data }) => {
+   .handler(async ({ data, context }) => {
+    await requireTeamRole(context.userId, ["admin", "staff"]);
     const guard = await import("@/lib/submit-guard.server");
     if (guard.isHoneypot(data.faxNumber)) {
       await guard.sleep(400);
@@ -98,7 +102,8 @@ export const submitAppointmentInquiry = createServerFn({ method: "POST" })
 
 export const listInquiries = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .handler(async () => {
+   .handler(async ({ context }) => {
+    await requireTeamRole(context.userId, ["admin", "staff", "viewer"]);
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
     const rows = await sql<{
@@ -132,7 +137,8 @@ export const listInquiries = createServerFn({ method: "GET" })
 export const getInquiry = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .validator(z.object({ id: z.string().min(1).max(64) }))
-  .handler(async ({ data }) => {
+   .handler(async ({ data, context }) => {
+    await requireTeamRole(context.userId, ["admin"]);
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
     const rows = await sql<{
