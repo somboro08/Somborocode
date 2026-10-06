@@ -1,5 +1,5 @@
 export const BRAND_NAME = "Somboro-code";
-export const INTENDED_DOMAIN = "sombrocode.com";
+export const INTENDED_DOMAIN = "somborocode.site";
 
 export const NAV = [
   { to: "/", label: "Accueil" },
