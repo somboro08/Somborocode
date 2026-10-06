@@ -209,7 +209,8 @@ export const updateInquiryStatus = createServerFn({ method: "POST" })
       status: inquiryStatusSchema,
     }),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await requireTeamRole(context.userId, ["admin", "staff"]);
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
     await sql`
@@ -229,6 +230,7 @@ export const addInquiryNote = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
+    await requireTeamRole(context.userId, ["admin", "staff"]);
     const { getSql } = await import("@/lib/db");
     const guard = await import("@/lib/submit-guard.server");
     const sql = await getSql();
