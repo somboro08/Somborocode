@@ -64,14 +64,18 @@ export const submitProjectInquiry = createServerFn({ method: "POST" })
       )
     `;
     const { sendInquiryEmails } = await import("@/lib/email/inquiry-email.server");
-    await sendInquiryEmails({
+    try {
+      await sendInquiryEmails({
       id,
       reference,
       name: data.name,
       email: data.email,
       kind: "project",
       description: data.description,
-    });
+      });
+    } catch (error) {
+      console.error("Inquiry email workflow failed", { id, reference, error });
+    }
     return { ok: true as const, reference };
   });
 
@@ -104,14 +108,18 @@ export const submitAppointmentInquiry = createServerFn({ method: "POST" })
       )
     `;
     const { sendInquiryEmails } = await import("@/lib/email/inquiry-email.server");
-    await sendInquiryEmails({
+    try {
+      await sendInquiryEmails({
       id,
       reference,
       name: data.name,
       email: data.email,
       kind: "appointment",
       description,
-    });
+      });
+    } catch (error) {
+      console.error("Inquiry email workflow failed", { id, reference, error });
+    }
     return { ok: true as const, reference };
   });
 
