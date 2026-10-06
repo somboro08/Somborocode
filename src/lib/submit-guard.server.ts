@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, randomInt } from "node:crypto";
 import { getRequestHeader, getRequestIP } from "@tanstack/react-start/server";
 import { getSql } from "@/lib/db";
 
@@ -22,7 +22,7 @@ export function newReference() {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let value = "SC-";
   for (let i = 0; i < 6; i += 1) {
-    value += alphabet[Math.floor(Math.random() * alphabet.length)];
+    value += alphabet[randomInt(alphabet.length)];
   }
   return value;
 }
@@ -30,29 +30,36 @@ export function newReference() {
 export async function assertRateLimit(kind: "project" | "appointment") {
   const sql = await getSql();
   const key = `${kind}:${clientFingerprint()}`;
-  const now = Date.now();
-  const rows = await sql<{
-    window_started_at: string;
-    hit_count: number;
-  }>`select window_started_at, hit_count from submission_rate_limits where key = ${key}`;
-  const row = rows[0];
-  if (!row) {
-    await sql`insert into submission_rate_limits (key, window_started_at, hit_count) values (${key}, now(), 1)`;
-    return;
-  }
-  const started = Date.parse(row.window_started_at);
-  if (!Number.isFinite(started) || now - started > WINDOW_MS) {
-    await sql`update submission_rate_limits set window_started_at = now(), hit_count = 1 where key = ${key}`;
-    return;
-  }
-  if (row.hit_count >= MAX_HITS) {
+
+  // One atomic upsert prevents concurrent requests from racing past the limit.
+  // The row is only returned when this request successfully consumes a hit.
+  const rows = await sql<{ hit_count: number }>`
+    insert into submission_rate_limits (key, window_started_at, hit_count)
+    values (${key}, now(), 1)
+    on conflict (key) do update
+    set
+      window_started_at = case
+        when submission_rate_limits.window_started_at <= now() - interval '1 hour'
+          then now()
+        else submission_rate_limits.window_started_at
+      end,
+      hit_count = case
+        when submission_rate_limits.window_started_at <= now() - interval '1 hour'
+          then 1
+        else submission_rate_limits.hit_count + 1
+      end
+    where
+      submission_rate_limits.window_started_at <= now() - interval '1 hour'
+      or submission_rate_limits.hit_count < ${MAX_HITS}
+    returning hit_count
+  `;
+
+  if (rows.length === 0) {
     throw new Error(
       "Plusieurs demandes viennent d’être envoyées depuis cet appareil. Réessayez un peu plus tard.",
     );
   }
-  await sql`update submission_rate_limits set hit_count = hit_count + 1 where key = ${key}`;
 }
-
 export function isHoneypot(value: string | undefined) {
   return Boolean(value && value.trim().length > 0);
 }
