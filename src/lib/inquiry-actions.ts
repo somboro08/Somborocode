@@ -41,9 +41,7 @@ export type InquiryDetail = InquiryListItem & {
 
 export const submitProjectInquiry = createServerFn({ method: "POST" })
   .validator(projectInquirySchema)
-    .handler(async ({ data, context }) => {
-    await requireTeamRole(context.userId, ["admin", "staff"]);
-    await requireTeamRole(context.userId, ["admin", "staff", "viewer"]);
+  .handler(async ({ data }) => {
     const guard = await import("@/lib/submit-guard.server");
     if (guard.isHoneypot(data.faxNumber)) {
       await guard.sleep(400);
@@ -70,8 +68,7 @@ export const submitProjectInquiry = createServerFn({ method: "POST" })
 
 export const submitAppointmentInquiry = createServerFn({ method: "POST" })
   .validator(appointmentInquirySchema)
-   .handler(async ({ data, context }) => {
-    await requireTeamRole(context.userId, ["admin", "staff"]);
+  .handler(async ({ data }) => {
     const guard = await import("@/lib/submit-guard.server");
     if (guard.isHoneypot(data.faxNumber)) {
       await guard.sleep(400);
@@ -137,8 +134,8 @@ export const listInquiries = createServerFn({ method: "GET" })
 export const getInquiry = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .validator(z.object({ id: z.string().min(1).max(64) }))
-   .handler(async ({ data, context }) => {
-    await requireTeamRole(context.userId, ["admin"]);
+  .handler(async ({ data, context }) => {
+    await requireTeamRole(context.userId, ["admin", "staff", "viewer"]);
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
     const rows = await sql<{
@@ -246,7 +243,8 @@ export const addInquiryNote = createServerFn({ method: "POST" })
 export const deleteInquiry = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(z.object({ id: z.string().min(1).max(64) }))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await requireTeamRole(context.userId, ["admin"]);
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
     await sql`delete from inquiries where id = ${data.id}`;
