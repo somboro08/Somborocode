@@ -1,8 +1,22 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { INTENDED_DOMAIN } from "@/lib/site";
+
+const PUBLIC_PATHS = [
+  "/",
+  "/services",
+  "/approche",
+  "/demarrer",
+  "/rendez-vous",
+  "/confidentialite",
+  "/mentions-legales",
+  "/conditions",
+] as const;
 
 const BODY = `<?xml version="1.0" encoding="UTF-8"?>
-<!-- URL absolues à renseigner après confirmation du domaine (sombrocode.com). -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${PUBLIC_PATHS.map(
+  (path) => `  <url><loc>https://${INTENDED_DOMAIN}${path}</loc></url>`,
+).join("\n")}
 </urlset>
 `;
 
