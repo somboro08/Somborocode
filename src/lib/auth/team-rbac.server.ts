@@ -45,6 +45,7 @@ export async function requireTeamRole(
 
   const adminEmails = envEmails("TEAM_ADMIN_EMAILS");
   const staffEmails = envEmails("TEAM_STAFF_EMAILS");
+  const viewerEmails = envEmails("TEAM_VIEWER_EMAILS");
   const email = user.email.trim().toLowerCase();
 
   // Environment allowlists are the bootstrap/containment layer. They can grant
@@ -54,7 +55,19 @@ export async function requireTeamRole(
     ? "admin"
     : staffEmails.has(email)
       ? "staff"
-      : user.role;
+      : viewerEmails.has(email)
+        ? "viewer"
+        : user.role;
+
+  const explicitlyAllowlisted =
+    adminEmails.has(email) || staffEmails.has(email) || viewerEmails.has(email);
+
+  // A default viewer role is intentionally not enough for team access: every
+  // authenticated account starts as viewer, so without this check any OAuth
+  // account could enter the team area.
+  if (!explicitlyAllowlisted && role === "viewer") {
+    throw new ForbiddenTeamAccessError();
+  }
 
   if (!role || !TEAM_ROLES.includes(role as TeamRole)) {
     throw new ForbiddenTeamAccessError();
