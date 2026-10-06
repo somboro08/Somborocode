@@ -63,6 +63,15 @@ export const submitProjectInquiry = createServerFn({ method: "POST" })
         ${data.budget ?? null}, ${data.contactPreference ?? null}
       )
     `;
+    const { sendInquiryEmails } = await import("@/lib/email/inquiry-email.server");
+    await sendInquiryEmails({
+      id,
+      reference,
+      name: data.name,
+      email: data.email,
+      kind: "project",
+      description: data.description,
+    });
     return { ok: true as const, reference };
   });
 
@@ -94,6 +103,15 @@ export const submitAppointmentInquiry = createServerFn({ method: "POST" })
         ${data.availability}, ${data.timezone}
       )
     `;
+    const { sendInquiryEmails } = await import("@/lib/email/inquiry-email.server");
+    await sendInquiryEmails({
+      id,
+      reference,
+      name: data.name,
+      email: data.email,
+      kind: "appointment",
+      description,
+    });
     return { ok: true as const, reference };
   });
 
