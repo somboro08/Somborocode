@@ -9,8 +9,7 @@ Disallow: /sante
 Disallow: /demarrer
 Disallow: /rendez-vous
 
-# Le fichier sitemap.xml sera publié avec des URL absolues
-# après confirmation et contrôle du domaine souhaité (sombrocode.com).
+Sitemap: https://somborocode.site/sitemap.xml
 `;
 
 export const Route = createFileRoute("/robots.txt")({

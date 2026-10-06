@@ -6,6 +6,7 @@ import {
   projectInquirySchema,
 } from "@/lib/inquiry-schema";
 import { z } from "zod";
+import { requireTeamRole } from "@/lib/auth/team-rbac.server";
 
 export type InquiryListItem = {
   id: string;
@@ -62,6 +63,19 @@ export const submitProjectInquiry = createServerFn({ method: "POST" })
         ${data.budget ?? null}, ${data.contactPreference ?? null}
       )
     `;
+    const { sendInquiryEmails } = await import("@/lib/email/inquiry-email.server");
+    try {
+      await sendInquiryEmails({
+      id,
+      reference,
+      name: data.name,
+      email: data.email,
+      kind: "project",
+      description: data.description,
+      });
+    } catch (error) {
+      console.error("Inquiry email workflow failed", { id, reference, error });
+    }
     return { ok: true as const, reference };
   });
 
@@ -93,12 +107,26 @@ export const submitAppointmentInquiry = createServerFn({ method: "POST" })
         ${data.availability}, ${data.timezone}
       )
     `;
+    const { sendInquiryEmails } = await import("@/lib/email/inquiry-email.server");
+    try {
+      await sendInquiryEmails({
+      id,
+      reference,
+      name: data.name,
+      email: data.email,
+      kind: "appointment",
+      description,
+      });
+    } catch (error) {
+      console.error("Inquiry email workflow failed", { id, reference, error });
+    }
     return { ok: true as const, reference };
   });
 
 export const listInquiries = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .handler(async () => {
+   .handler(async ({ context }) => {
+    await requireTeamRole(context.userId, ["admin", "staff", "viewer"]);
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
     const rows = await sql<{
@@ -132,7 +160,8 @@ export const listInquiries = createServerFn({ method: "GET" })
 export const getInquiry = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .validator(z.object({ id: z.string().min(1).max(64) }))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await requireTeamRole(context.userId, ["admin", "staff", "viewer"]);
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
     const rows = await sql<{
@@ -206,7 +235,8 @@ export const updateInquiryStatus = createServerFn({ method: "POST" })
       status: inquiryStatusSchema,
     }),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await requireTeamRole(context.userId, ["admin", "staff"]);
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
     await sql`
@@ -226,6 +256,7 @@ export const addInquiryNote = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data, context }) => {
+    await requireTeamRole(context.userId, ["admin", "staff"]);
     const { getSql } = await import("@/lib/db");
     const guard = await import("@/lib/submit-guard.server");
     const sql = await getSql();
@@ -240,7 +271,8 @@ export const addInquiryNote = createServerFn({ method: "POST" })
 export const deleteInquiry = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(z.object({ id: z.string().min(1).max(64) }))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await requireTeamRole(context.userId, ["admin"]);
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
     await sql`delete from inquiries where id = ${data.id}`;

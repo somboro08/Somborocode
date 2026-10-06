@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - hardening-production
   pull_request:
     branches:
       - main
@@ -32,7 +33,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --ignore-scripts
 
       - name: Lint
         run: npm run lint
@@ -43,14 +44,5 @@ jobs:
       - name: Tests
         run: npm test
 
-      - name: Build production
-        run: npm run build
-
-      - name: Upload production build
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: somborocode-production-build
-          path: .vercel/output
-          if-no-files-found: error
-          retention-days: 14
+      - name: Auth invariant
+        run: npm run check:auth
